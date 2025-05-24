@@ -351,3 +351,6 @@ FodyWeavers.xsd
 
 # Test HTG files (contain binary tool data)
 *.htg
+
+# Visual Studio Code workspace storage
+.vscode/

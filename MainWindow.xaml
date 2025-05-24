@@ -2,72 +2,59 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Masso Tool Editor" Height="600" Width="900"
-        WindowStartupLocation="CenterScreen">
-    <Grid>
+        WindowStartupLocation="CenterScreen">    <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
-
-        <!-- Menu Bar -->
-        <Menu Grid.Row="0">
-            <MenuItem Header="_File">
-                <MenuItem Name="MenuOpen" Header="_Open..." Click="MenuOpen_Click" InputGestureText="Ctrl+O"/>
-                <Separator/>
-                <MenuItem Name="MenuSave" Header="_Save" Click="MenuSave_Click" InputGestureText="Ctrl+S" IsEnabled="False"/>
-                <MenuItem Name="MenuSaveAs" Header="Save _As..." Click="MenuSaveAs_Click" InputGestureText="Ctrl+Shift+S" IsEnabled="False"/>
-                <Separator/>
-                <MenuItem Name="MenuImportCsv" Header="_Import CSV..." Click="MenuImportCsv_Click" IsEnabled="False"/>
-                <MenuItem Name="MenuExportCsv" Header="_Export CSV..." Click="MenuExportCsv_Click" IsEnabled="False"/>
-                <Separator/>
-                <MenuItem Name="MenuExit" Header="E_xit" Click="MenuExit_Click"/>
-            </MenuItem>
-            <MenuItem Header="_Edit">
-                <MenuItem Name="MenuClear" Header="_Clear Records 1-104" Click="MenuClear_Click" IsEnabled="False"/>
-            </MenuItem>
-            <MenuItem Header="_Help">
-                <MenuItem Name="MenuAbout" Header="_About" Click="MenuAbout_Click"/>
-            </MenuItem>
-        </Menu>
-
-        <!-- Toolbar -->
-        <ToolBar Grid.Row="1" IsEnabled="False" Name="MainToolbar">
-            <Button Name="BtnOpen" Click="MenuOpen_Click" ToolTip="Open HTG file">
+        </Grid.RowDefinitions>        <!-- Toolbar -->
+        <ToolBar Grid.Row="0" Name="MainToolbar">
+            <Button Name="BtnOpen" Click="BtnOpen_Click" ToolTip="Open HTG file">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="📁" FontSize="16" Margin="0,0,5,0"/>
                     <TextBlock Text="Open"/>
                 </StackPanel>
             </Button>
-            <Button Name="BtnSave" Click="MenuSave_Click" ToolTip="Save HTG file" IsEnabled="False">
+            <Button Name="BtnSave" Click="BtnSave_Click" ToolTip="Save HTG file" IsEnabled="False">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="💾" FontSize="16" Margin="0,0,5,0"/>
                     <TextBlock Text="Save"/>
                 </StackPanel>
             </Button>
+            <Button Name="BtnSaveAs" Click="BtnSaveAs_Click" ToolTip="Save As HTG file" IsEnabled="False">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="💾" FontSize="16" Margin="0,0,5,0"/>
+                    <TextBlock Text="Save As"/>
+                </StackPanel>
+            </Button>
             <Separator/>
-            <Button Name="BtnImportCsv" Click="MenuImportCsv_Click" ToolTip="Import from CSV" IsEnabled="False">
+            <Button Name="BtnImportCsv" Click="BtnImportCsv_Click" ToolTip="Import from CSV" IsEnabled="False">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="📊" FontSize="16" Margin="0,0,5,0"/>
                     <TextBlock Text="Import CSV"/>
                 </StackPanel>
             </Button>
-            <Button Name="BtnExportCsv" Click="MenuExportCsv_Click" ToolTip="Export to CSV" IsEnabled="False">
+            <Button Name="BtnExportCsv" Click="BtnExportCsv_Click" ToolTip="Export to CSV" IsEnabled="False">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="📋" FontSize="16" Margin="0,0,5,0"/>
                     <TextBlock Text="Export CSV"/>
                 </StackPanel>
             </Button>
             <Separator/>
-            <TextBlock Text="Units:" VerticalAlignment="Center" Margin="10,0,5,0"/>            <RadioButton Name="RadioMm" Content="Millimeters" GroupName="Units" IsChecked="True" 
-                         VerticalAlignment="Center" Margin="0,0,10,0" IsEnabled="False"/>
-            <RadioButton Name="RadioInch" Content="Inches" GroupName="Units" 
-                         VerticalAlignment="Center" IsEnabled="False"/>
-        </ToolBar>
-
-        <!-- Data Grid -->
-        <DataGrid Grid.Row="2" Name="ToolGrid" 
+            <Button Name="BtnClear" Click="BtnClear_Click" ToolTip="Clear Records 1-104" IsEnabled="False">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="🗑️" FontSize="16" Margin="0,0,5,0"/>
+                    <TextBlock Text="Clear"/>
+                </StackPanel>            </Button>
+            <Separator/>
+            <Button Name="BtnAbout" Click="BtnAbout_Click" ToolTip="About this application">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="❓" FontSize="16" Margin="0,0,5,0"/>
+                    <TextBlock Text="About"/>
+                </StackPanel>
+            </Button>
+        </ToolBar>        <!-- Data Grid -->
+        <DataGrid Grid.Row="1" Name="ToolGrid"
                   AutoGenerateColumns="False" 
                   CanUserAddRows="False" 
                   CanUserDeleteRows="False"
@@ -78,15 +65,12 @@
                   HeadersVisibility="Column"
                   CellEditEnding="ToolGrid_CellEditEnding"
                   BeginningEdit="ToolGrid_BeginningEdit"
-                  Margin="5">
-            
-            <DataGrid.Columns>
+                  Margin="5">            <DataGrid.Columns>
                 <DataGridTextColumn Header="Tool No." Binding="{Binding ToolNumber}" IsReadOnly="True" Width="80"/>
                 <DataGridTextColumn Header="Tool Name" Binding="{Binding ToolName}" Width="200"/>
-                <DataGridTextColumn Header="Z Offset" Binding="{Binding ZOffset, StringFormat=F3}" Width="100"/>
-                <DataGridTextColumn Header="Tool Diameter" Binding="{Binding ToolDiameter, StringFormat=F3}" Width="120"/>
-                <DataGridTextColumn Header="Tool Dia Wear" Binding="{Binding ToolDiaWear, StringFormat=F3}" Width="120"/>
-                <DataGridTextColumn Header="CRC" Binding="{Binding CRC, StringFormat=X8}" IsReadOnly="True" Width="100"/>
+                <DataGridTextColumn Header="Z Offset" Binding="{Binding ZOffset, StringFormat=F5}" Width="100"/>
+                <DataGridTextColumn Header="Tool Diameter" Binding="{Binding ToolDiameter, StringFormat=F5}" Width="120"/>
+                <DataGridTextColumn Header="Tool Dia Wear" Binding="{Binding ToolDiaWear, StringFormat=F5}" Width="120"/>
             </DataGrid.Columns>
 
             <DataGrid.RowStyle>
@@ -99,10 +83,8 @@
                     </Style.Triggers>
                 </Style>
             </DataGrid.RowStyle>
-        </DataGrid>
-
-        <!-- Status Bar -->
-        <StatusBar Grid.Row="3">
+        </DataGrid>        <!-- Status Bar -->
+        <StatusBar Grid.Row="2">
             <StatusBarItem>
                 <TextBlock Name="StatusText" Text="Ready - Please open an HTG file to begin"/>
             </StatusBarItem>

@@ -1,0 +1,62 @@
+<Window x:Class="MassoToolEditor.UnitSelectionDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"        Title="Masso Tool Editor - Unit Selection"
+        Width="350"
+        Height="250"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        WindowStyle="SingleBorderWindow">
+    
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Title -->
+        <TextBlock Grid.Row="0" 
+                   Text="Please select the units used on your machine:"
+                   FontSize="14"
+                   FontWeight="SemiBold"
+                   Margin="0,0,0,20"/>        <!-- Unit Options -->
+        <StackPanel Grid.Row="1" Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <RadioButton Name="RadioMm" 
+                         Content="Millimeters (mm)" 
+                         GroupName="Units" 
+                         IsChecked="True"
+                         FontSize="14"
+                         Margin="0,5"
+                         Padding="5"
+                         VerticalContentAlignment="Center"/>
+            <RadioButton Name="RadioInch" 
+                         Content="Inches (in)" 
+                         GroupName="Units"
+                         FontSize="14"
+                         Margin="0,5"
+                         Padding="5"
+                         VerticalContentAlignment="Center"/>
+        </StackPanel>
+        
+        <!-- Buttons -->
+        <StackPanel Grid.Row="2" 
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Right"
+                    Margin="0,20,0,0">
+            <Button Name="BtnOk" 
+                    Content="OK" 
+                    Width="80" 
+                    Height="30"
+                    Margin="0,0,10,0"
+                    IsDefault="True"
+                    Click="BtnOk_Click"/>
+            <Button Name="BtnCancel" 
+                    Content="Cancel" 
+                    Width="80" 
+                    Height="30"
+                    IsCancel="True"
+                    Click="BtnCancel_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

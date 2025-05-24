@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net9.0-windows</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -13,5 +13,12 @@
     <EnableDefaultWindowsRuntimeReferences>true</EnableDefaultWindowsRuntimeReferences>
   </PropertyGroup>
 
+<PropertyGroup>
+  <ApplicationIcon>Masso_Tool_Editor.ico</ApplicationIcon>
+</PropertyGroup>
+
+<ItemGroup>
+  <None Include="Masso_Tool_Editor.ico" />
+</ItemGroup>
 
 </Project>

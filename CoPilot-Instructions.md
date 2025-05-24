@@ -92,7 +92,7 @@ The application includes comprehensive error handling for:
 - All numeric values are stored in little-endian format.
 
 ## Technology
-- .NET 9.0 or later
+- .NET 8.0
 - Windows OS
 - Visual Studio 2022 or Visual Studio Code with C# extension
 - WPF

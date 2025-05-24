@@ -39,18 +39,18 @@ namespace MassoToolEditor.Services
                     record.ToolNumber = toolNumber;
                     
                     // Parse tool name (truncate if too long)
-                    record.ToolName = fields[1].Length > 29 ? fields[1].Substring(0, 29) : fields[1];
-                    
-                    // Parse tool diameter
+                    record.ToolName = fields[1].Length > 29 ? fields[1].Substring(0, 29) : fields[1];                    // Parse tool diameter
                     if (float.TryParse(fields[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float diameter))
                     {
-                        record.ToolDiameter = units == Units.Inches ? diameter * 25.4f : diameter;
+                        // CSV values are in the specified units, same as current GUI units, so no conversion needed
+                        record.ToolDiameter = diameter;
                     }
                     
                     // Parse tool diameter wear
                     if (float.TryParse(fields[3], NumberStyles.Float, CultureInfo.InvariantCulture, out float wear))
                     {
-                        record.ToolDiaWear = units == Units.Inches ? wear * 25.4f : wear;
+                        // CSV values are in the specified units, same as current GUI units, so no conversion needed
+                        record.ToolDiaWear = wear;
                     }
                     
                     // Z offset defaults to 0 for CSV imports
@@ -66,24 +66,19 @@ namespace MassoToolEditor.Services
             }
 
             return records;
-        }
-
-        public static void ExportToCsv(string filePath, List<ToolRecord> records, Units units)
+        }        public static void ExportToCsv(string filePath, List<ToolRecord> records, Units units, Units currentUnits)
         {
             var csv = new StringBuilder();
             
             // Header
             csv.AppendLine("Tool No.,Tool Name,Tool Diameter,Tool Dia Wear");
-            
-            // Data rows (skip record 0)
-            for (int i = 1; i < records.Count; i++)
+              // Data rows (all records since we no longer have record 0)
+            foreach (var record in records)
             {
-                var record = records[i];
+                float diameter = UnitConverter.ConvertValue(record.ToolDiameter, currentUnits, units);
+                float wear = UnitConverter.ConvertValue(record.ToolDiaWear, currentUnits, units);
                 
-                float diameter = units == Units.Inches ? record.ToolDiameter / 25.4f : record.ToolDiameter;
-                float wear = units == Units.Inches ? record.ToolDiaWear / 25.4f : record.ToolDiaWear;
-                
-                csv.AppendLine($"{record.ToolNumber},{EscapeCsvField(record.ToolName)},{diameter:F3},{wear:F3}");
+                csv.AppendLine($"{record.ToolNumber},{EscapeCsvField(record.ToolName)},{diameter:F5},{wear:F5}");
             }
             
             File.WriteAllText(filePath, csv.ToString());

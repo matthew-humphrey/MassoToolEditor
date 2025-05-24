@@ -1,12 +1,9 @@
 using MassoToolEditor.Models;
 using MassoToolEditor.Services;
 using Microsoft.Win32;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -20,8 +17,7 @@ namespace MassoToolEditor
     {    private ObservableCollection<ToolRecord> _toolRecords;
         private string? _currentFilePath;
         private bool _isModified;
-        private Units _currentUnits = Units.Millimeters;
-          public MainWindow()
+        private Units _currentUnits = Units.Millimeters;        public MainWindow()
         {
             try
             {
@@ -30,18 +26,20 @@ namespace MassoToolEditor
                 _toolRecords = new ObservableCollection<ToolRecord>();
                 ToolGrid.ItemsSource = _toolRecords;
                 
-                // Set up radio button event handlers after initialization
-                RadioMm.Checked += RadioUnits_Checked;
-                RadioInch.Checked += RadioUnits_Checked;
+                // Show unit selection dialog at startup
+                ShowUnitSelectionDialog();
                 
                 // Set up keyboard shortcuts
-                CommandBindings.Add(new CommandBinding(ApplicationCommands.Open, (s, e) => MenuOpen_Click(s, null)));
-                CommandBindings.Add(new CommandBinding(ApplicationCommands.Save, (s, e) => MenuSave_Click(s, null)));
-                CommandBindings.Add(new CommandBinding(ApplicationCommands.SaveAs, (s, e) => MenuSaveAs_Click(s, null)));
+                CommandBindings.Add(new CommandBinding(ApplicationCommands.Open, (s, e) => BtnOpen_Click(s, null)));
+                CommandBindings.Add(new CommandBinding(ApplicationCommands.Save, (s, e) => BtnSave_Click(s, null)));
+                CommandBindings.Add(new CommandBinding(ApplicationCommands.SaveAs, (s, e) => BtnSaveAs_Click(s, null)));
                 
                 InputBindings.Add(new KeyBinding(ApplicationCommands.Open, Key.O, ModifierKeys.Control));
                 InputBindings.Add(new KeyBinding(ApplicationCommands.Save, Key.S, ModifierKeys.Control));
                 InputBindings.Add(new KeyBinding(ApplicationCommands.SaveAs, Key.S, ModifierKeys.Control | ModifierKeys.Shift));
+                
+                // Update column headers with selected units
+                UpdateColumnHeaders();
             }
             catch (Exception ex)
             {
@@ -49,9 +47,21 @@ namespace MassoToolEditor
                                "MainWindow Initialization Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 throw;
             }
-        }
-
-        private void MenuOpen_Click(object? sender, RoutedEventArgs? e)
+        }        private void ShowUnitSelectionDialog()
+        {
+            var unitDialog = new UnitSelectionDialog();
+            var result = unitDialog.ShowDialog();
+            
+            if (result == true)
+            {
+                _currentUnits = unitDialog.SelectedUnits;
+            }
+            else
+            {
+                // If user cancels, exit the application
+                Application.Current.Shutdown();
+            }
+        }private void BtnOpen_Click(object? sender, RoutedEventArgs? e)
         {
             if (_isModified && !PromptSaveChanges())
                 return;
@@ -75,9 +85,7 @@ namespace MassoToolEditor
                     DisableAllFunctionality();
                 }
             }
-        }
-
-        private void LoadFile(string filePath)
+        }        private void LoadFile(string filePath)
         {
             StatusText.Text = "Loading file...";
             
@@ -89,12 +97,9 @@ namespace MassoToolEditor
                 // Convert from mm to current units if needed
                 if (_currentUnits == Units.Inches)
                 {
-                    if (record.ToolNumber > 0) // Don't convert record 0
-                    {
-                        record.ZOffset = UnitConverter.ConvertValue(record.ZOffset, Units.Millimeters, Units.Inches);
-                        record.ToolDiameter = UnitConverter.ConvertValue(record.ToolDiameter, Units.Millimeters, Units.Inches);
-                        record.ToolDiaWear = UnitConverter.ConvertValue(record.ToolDiaWear, Units.Millimeters, Units.Inches);
-                    }
+                    record.ZOffset = UnitConverter.ConvertValue(record.ZOffset, Units.Millimeters, Units.Inches);
+                    record.ToolDiameter = UnitConverter.ConvertValue(record.ToolDiameter, Units.Millimeters, Units.Inches);
+                    record.ToolDiaWear = UnitConverter.ConvertValue(record.ToolDiaWear, Units.Millimeters, Units.Inches);
                 }
                 
                 record.PropertyChanged += Record_PropertyChanged;
@@ -108,43 +113,24 @@ namespace MassoToolEditor
             UpdateStatusBar();
             
             StatusText.Text = $"Loaded {records.Count} tool records";
+        }        private void Record_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            _isModified = true;
+            UpdateTitle();
         }
 
-        private void Record_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-        {
-            if (sender is ToolRecord record && record.ToolNumber > 0) // Don't mark as modified for record 0
-            {
-                _isModified = true;
-                UpdateTitle();
-                
-                // Recalculate CRC when record is modified
-                UpdateRecordCrc(record);
-            }
-        }        private void UpdateRecordCrc(ToolRecord record)
-        {
-            // Record 0 should always have CRC = 0, don't recalculate it
-            if (record.ToolNumber == 0)
-            {
-                record.CRC = 0;
-                return;
-            }
-            
-            // For records 1-104, mark as needing recalculation (will be done when saving)
-            record.CRC = 0; // Will be recalculated when saving
-        }
-
-        private void MenuSave_Click(object? sender, RoutedEventArgs? e)
+        private void BtnSave_Click(object? sender, RoutedEventArgs? e)
         {
             if (string.IsNullOrEmpty(_currentFilePath))
             {
-                MenuSaveAs_Click(sender, e);
+                BtnSaveAs_Click(sender, e);
                 return;
             }
 
             SaveFile(_currentFilePath);
         }
 
-        private void MenuSaveAs_Click(object? sender, RoutedEventArgs? e)
+        private void BtnSaveAs_Click(object? sender, RoutedEventArgs? e)
         {
             var saveFileDialog = new SaveFileDialog
             {
@@ -168,18 +154,15 @@ namespace MassoToolEditor
                 // Convert records to mm for saving if currently in inches
                 var recordsToSave = new List<ToolRecord>();
                 foreach (var record in _toolRecords)
-                {
-                    var recordCopy = new ToolRecord
+                {                    var recordCopy = new ToolRecord
                     {
                         ToolNumber = record.ToolNumber,
                         ToolName = record.ToolName,
                         ZOffset = record.ZOffset,
                         ToolDiameter = record.ToolDiameter,
-                        ToolDiaWear = record.ToolDiaWear,
-                        CRC = record.CRC
+                        ToolDiaWear = record.ToolDiaWear
                     };
-                    
-                    if (_currentUnits == Units.Inches && record.ToolNumber > 0)
+                      if (_currentUnits == Units.Inches)
                     {
                         recordCopy.ZOffset = UnitConverter.ConvertValue(record.ZOffset, Units.Inches, Units.Millimeters);
                         recordCopy.ToolDiameter = UnitConverter.ConvertValue(record.ToolDiameter, Units.Inches, Units.Millimeters);
@@ -203,9 +186,7 @@ namespace MassoToolEditor
                 MessageBox.Show($"Error saving file: {ex.Message}", "Error", 
                               MessageBoxButton.OK, MessageBoxImage.Error);
             }
-        }
-
-        private void MenuImportCsv_Click(object? sender, RoutedEventArgs? e)
+        }        private void BtnImportCsv_Click(object? sender, RoutedEventArgs? e)
         {
             var openFileDialog = new OpenFileDialog
             {
@@ -218,12 +199,11 @@ namespace MassoToolEditor
                 try
                 {
                     var importedRecords = CsvService.ImportFromCsv(openFileDialog.FileName, _currentUnits);
-                    
-                    // Update existing records with imported data
+                      // Update existing records with imported data
                     foreach (var importedRecord in importedRecords)
                     {
                         var existingRecord = _toolRecords.FirstOrDefault(r => r.ToolNumber == importedRecord.ToolNumber);
-                        if (existingRecord != null && existingRecord.ToolNumber > 0) // Don't update record 0
+                        if (existingRecord != null)
                         {
                             existingRecord.ToolName = importedRecord.ToolName;
                             existingRecord.ToolDiameter = importedRecord.ToolDiameter;
@@ -240,9 +220,7 @@ namespace MassoToolEditor
                                   MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
-        }
-
-        private void MenuExportCsv_Click(object? sender, RoutedEventArgs? e)
+        }        private void BtnExportCsv_Click(object? sender, RoutedEventArgs? e)
         {
             var saveFileDialog = new SaveFileDialog
             {
@@ -255,7 +233,7 @@ namespace MassoToolEditor
             {
                 try
                 {
-                    CsvService.ExportToCsv(saveFileDialog.FileName, _toolRecords.ToList(), _currentUnits);
+                    CsvService.ExportToCsv(saveFileDialog.FileName, _toolRecords.ToList(), _currentUnits, _currentUnits);
                     StatusText.Text = "Tools exported to CSV successfully";
                 }
                 catch (Exception ex)
@@ -266,82 +244,48 @@ namespace MassoToolEditor
             }
         }
 
-        private void MenuClear_Click(object? sender, RoutedEventArgs? e)
+        private void BtnClear_Click(object? sender, RoutedEventArgs? e)
         {
-            var result = MessageBox.Show("This will clear all tool records 1-104. Are you sure?", 
+            var result = MessageBox.Show("This will clear all tool records. Are you sure?",
                                        "Confirm Clear", MessageBoxButton.YesNo, MessageBoxImage.Question);
-            
+
             if (result == MessageBoxResult.Yes)
             {
-                for (int i = 1; i < _toolRecords.Count; i++)
+                foreach (var record in _toolRecords)
                 {
-                    var record = _toolRecords[i];
                     record.ToolName = string.Empty;
                     record.ZOffset = 0;
                     record.ToolDiameter = 0;
                     record.ToolDiaWear = 0;
                 }
-                
+
                 StatusText.Text = "Cleared tool records 1-104";
             }
         }
 
-        private void MenuExit_Click(object? sender, RoutedEventArgs? e)
-        {
-            Close();
-        }
-
-        private void MenuAbout_Click(object? sender, RoutedEventArgs? e)
+        private void BtnAbout_Click(object? sender, RoutedEventArgs? e)
         {
             MessageBox.Show("Masso Tool Editor v1.0\n\n" +
-                          "A Windows WPF application for editing Masso 5-Axis tool files (.htg format).\n\n" +
-                          "MIT License\n\n" +
-                          "DISCLAIMER: Please back up your Masso settings before using this tool. " +
+                          "A Windows application for editing Masso 5-Axis tool files (MASSO_5-Axis_Tools.htg).\n\n" +
+                          "Please back up your Masso settings before using this tool. " +
                           "You assume all risk if this application causes any problems with your Masso controller.",
                           "About Masso Tool Editor", MessageBoxButton.OK, MessageBoxImage.Information);
         }        private void RadioUnits_Checked(object? sender, RoutedEventArgs? e)
         {
-            if (_toolRecords == null || _toolRecords.Count == 0)
-                return;
-
-            var newUnits = RadioMm.IsChecked == true ? Units.Millimeters : Units.Inches;
-            
-            if (newUnits != _currentUnits)
-            {
-                // Convert all values except record 0
-                for (int i = 1; i < _toolRecords.Count; i++)
-                {
-                    var record = _toolRecords[i];
-                    record.ZOffset = UnitConverter.ConvertValue(record.ZOffset, _currentUnits, newUnits);
-                    record.ToolDiameter = UnitConverter.ConvertValue(record.ToolDiameter, _currentUnits, newUnits);
-                    record.ToolDiaWear = UnitConverter.ConvertValue(record.ToolDiaWear, _currentUnits, newUnits);
-                }
-                
-                _currentUnits = newUnits;
-                UpdateColumnHeaders();
-                StatusText.Text = $"Units changed to {(_currentUnits == Units.Millimeters ? "millimeters" : "inches")}";
-            }
-        }
-
-        private void UpdateColumnHeaders()
+            // This method is no longer used - units are selected at startup
+        }private void UpdateColumnHeaders()
         {
             string unit = UnitConverter.GetUnitAbbreviation(_currentUnits);
             
-            if (ToolGrid.Columns.Count >= 6)
+            if (ToolGrid.Columns.Count >= 5)
             {
                 ((DataGridTextColumn)ToolGrid.Columns[2]).Header = $"Z Offset ({unit})";
                 ((DataGridTextColumn)ToolGrid.Columns[3]).Header = $"Tool Diameter ({unit})";
                 ((DataGridTextColumn)ToolGrid.Columns[4]).Header = $"Tool Dia Wear ({unit})";
             }
-        }
-
-        private void ToolGrid_BeginningEdit(object? sender, DataGridBeginningEditEventArgs e)
+        }        private void ToolGrid_BeginningEdit(object? sender, DataGridBeginningEditEventArgs e)
         {
-            if (e.Row.Item is ToolRecord record && record.IsReadOnly)
-            {
-                e.Cancel = true;
-                StatusText.Text = "Record 0 is read-only and cannot be modified";
-            }
+            // All records are now editable since record 0 is not shown
         }
 
         private void ToolGrid_CellEditEnding(object? sender, DataGridCellEditEndingEventArgs e)
@@ -350,42 +294,26 @@ namespace MassoToolEditor
             {
                 StatusText.Text = "Record modified";
             }
-        }
-
-        private void EnableAllFunctionality()
+        }        private void EnableAllFunctionality()
         {
-            MenuSave.IsEnabled = true;
-            MenuSaveAs.IsEnabled = true;
-            MenuImportCsv.IsEnabled = true;
-            MenuExportCsv.IsEnabled = true;
-            MenuClear.IsEnabled = true;
-            
             BtnSave.IsEnabled = true;
+            BtnSaveAs.IsEnabled = true;
             BtnImportCsv.IsEnabled = true;
             BtnExportCsv.IsEnabled = true;
+            BtnClear.IsEnabled = true;
             
-            RadioMm.IsEnabled = true;
-            RadioInch.IsEnabled = true;
-            
-            MainToolbar.IsEnabled = true;
+            // Note: BtnOpen should always remain enabled
         }
 
         private void DisableAllFunctionality()
         {
-            MenuSave.IsEnabled = false;
-            MenuSaveAs.IsEnabled = false;
-            MenuImportCsv.IsEnabled = false;
-            MenuExportCsv.IsEnabled = false;
-            MenuClear.IsEnabled = false;
-            
             BtnSave.IsEnabled = false;
+            BtnSaveAs.IsEnabled = false;
             BtnImportCsv.IsEnabled = false;
             BtnExportCsv.IsEnabled = false;
+            BtnClear.IsEnabled = false;
             
-            RadioMm.IsEnabled = false;
-            RadioInch.IsEnabled = false;
-            
-            MainToolbar.IsEnabled = false;
+            // Note: BtnOpen should always remain enabled
             
             _toolRecords.Clear();
             _currentFilePath = null;
@@ -409,9 +337,7 @@ namespace MassoToolEditor
         private void UpdateStatusBar()
         {
             FilePathText.Text = _currentFilePath ?? string.Empty;
-        }
-
-        private bool PromptSaveChanges()
+        }        private bool PromptSaveChanges()
         {
             if (!_isModified)
                 return true;
@@ -422,7 +348,7 @@ namespace MassoToolEditor
             switch (result)
             {
                 case MessageBoxResult.Yes:
-                    MenuSave_Click(null, null);
+                    BtnSave_Click(null, null);
                     return !_isModified; // Return true if save was successful
                 case MessageBoxResult.No:
                     return true;

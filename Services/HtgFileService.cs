@@ -6,13 +6,15 @@ using System.IO;
 using System.Text;
 
 namespace MassoToolEditor.Services
-{
-    public class HtgFileService
+{    public class HtgFileService
     {
         private const int RecordCount = 105;
         private const int RecordSize = 64;
         private const int ExpectedFileSize = RecordCount * RecordSize;
         private const int ToolNameSize = 30;
+        
+        // Store record 0 as raw bytes - it's never modified
+        private static byte[]? _record0Bytes;
         
         enum RecordFieldOffsets
         {
@@ -26,9 +28,7 @@ namespace MassoToolEditor.Services
             ToolDiameter = 52, // float
             Unknown5 = 56, // uint32
             CRC = 60 // uint32
-        }
-
-        public static List<ToolRecord> LoadFromFile(string filePath)
+        }        public static List<ToolRecord> LoadFromFile(string filePath)
         {
             if (!File.Exists(filePath))
                 throw new FileNotFoundException($"File not found: {filePath}");
@@ -40,51 +40,55 @@ namespace MassoToolEditor.Services
 
             var records = new List<ToolRecord>();
 
-            for (int i = 0; i < RecordCount; i++)
+            // Store record 0 as raw bytes - never modify it
+            _record0Bytes = new byte[RecordSize];
+            Array.Copy(fileData, 0, _record0Bytes, 0, RecordSize);
+
+            // Validate record 0 has CRC = 0
+            uint record0Crc = BitConverter.ToUInt32(_record0Bytes, (int)RecordFieldOffsets.CRC);
+            if (record0Crc != 0)
+                throw new InvalidDataException($"Record 0 must have CRC = 0, but found CRC = {record0Crc:X8}");
+
+            // Parse records 1-104 only
+            for (int i = 1; i < RecordCount; i++)
             {
                 int offset = i * RecordSize;
                 var record = ParseRecord(fileData, offset, i);
 
-                // Validate CRC for records 1-104 only (record 0 should have CRC = 0)
-                if (i == 0)
-                {
-                    // Record 0 should have CRC = 0
-                    if (record.CRC != 0)
-                        throw new InvalidDataException($"Record 0 must have CRC = 0, but found CRC = {record.CRC:X8}");
-                }
-                else
-                {
-                    // Validate unknown fields and CRC for records 1-104
-                    if (!ValidateRecordCrc(fileData, offset))
-                        throw new InvalidDataException($"CRC validation failed for record {i}");
+                // Validate unknown fields and CRC for records 1-104
+                if (!ValidateRecordCrc(fileData, offset))
+                    throw new InvalidDataException($"CRC validation failed for record {i}");
 
-                    if (!ValidateUnknownFields(fileData, offset))
-                        throw new InvalidDataException($"Invalid / unexpected values in record {i}");
-                }
+                if (!ValidateUnknownFields(fileData, offset))
+                    throw new InvalidDataException($"Invalid / unexpected values in record {i}");
 
                 records.Add(record);
             }
 
             return records;
-        }
-
-        public static void SaveToFile(string filePath, List<ToolRecord> records)
+        }        public static void SaveToFile(string filePath, List<ToolRecord> records)
         {
-            if (records.Count != RecordCount)
-                throw new ArgumentException($"Expected {RecordCount} records, got {records.Count}");
+            if (records.Count != RecordCount - 1) // Expecting 104 records (1-104)
+                throw new ArgumentException($"Expected {RecordCount - 1} records, got {records.Count}");
+
+            if (_record0Bytes == null)
+                throw new InvalidOperationException("Record 0 bytes not loaded. Load a file first.");
 
             byte[] fileData = new byte[ExpectedFileSize];
 
-            for (int i = 1; i < RecordCount; i++)
+            // Write record 0 unmodified
+            Array.Copy(_record0Bytes, 0, fileData, 0, RecordSize);
+
+            // Write records 1-104
+            for (int i = 0; i < records.Count; i++)
             {
-                int offset = i * RecordSize;
+                int recordNumber = i + 1; // Records are numbered 1-104
+                int offset = recordNumber * RecordSize;
                 WriteRecord(fileData, offset, records[i]);
             }
 
             File.WriteAllBytes(filePath, fileData);
-        }
-
-        private static ToolRecord ParseRecord(byte[] data, int offset, int recordNumber)
+        }private static ToolRecord ParseRecord(byte[] data, int offset, int recordNumber)
         {
             var record = new ToolRecord { ToolNumber = recordNumber };
 
@@ -101,12 +105,11 @@ namespace MassoToolEditor.Services
             record.ZOffset = BitConverter.ToSingle(data, offset + (int)RecordFieldOffsets.ZOffset);
             record.ToolDiaWear = BitConverter.ToSingle(data, offset + (int)RecordFieldOffsets.ToolDiaWear);
             record.ToolDiameter = BitConverter.ToSingle(data, offset + (int)RecordFieldOffsets.ToolDiameter);
-            record.CRC = BitConverter.ToUInt32(data, offset + (int)RecordFieldOffsets.CRC);
+            
+            // CRC is handled internally for validation only
 
             return record;
-        }
-
-        private static void WriteRecord(byte[] data, int offset, ToolRecord record)
+        }        private static void WriteRecord(byte[] data, int offset, ToolRecord record)
         {
             // Clear the record area
             Array.Clear(data, offset, RecordSize);
@@ -130,14 +133,13 @@ namespace MassoToolEditor.Services
             // Tool diameter (bytes 50-53)
             BitConverter.GetBytes(record.ToolDiameter).CopyTo(data, offset + (int)RecordFieldOffsets.ToolDiameter);
 
-            // Calculate CRC unless it's all zeroes.
+            // Calculate and write CRC unless it's all zeroes.
             if (!IsRecordPreCRCAllZeroes(data, offset))
             {
                 byte[] recordData = new byte[60];
                 Array.Copy(data, offset, recordData, 0, 60);
                 uint crc = CrcCalculator.CalculateCrc32(recordData);
                 BitConverter.GetBytes(crc).CopyTo(data, offset + (int)RecordFieldOffsets.CRC);
-                record.CRC = crc;
             }
         }
 
