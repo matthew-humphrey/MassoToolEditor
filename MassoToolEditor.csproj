@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyTitle>Masso Tool Editor</AssemblyTitle>
+    <AssemblyDescription>A Windows WPF application for editing Masso 5-Axis tool files (.htg format)</AssemblyDescription>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <AssemblyFileVersion>1.0.0.0</AssemblyFileVersion>
+    <Copyright>MIT License</Copyright>
+    <EnableDefaultWindowsRuntimeReferences>true</EnableDefaultWindowsRuntimeReferences>
+  </PropertyGroup>
+
+
+</Project>
