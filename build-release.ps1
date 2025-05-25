@@ -50,7 +50,7 @@ if (Test-Path "publish") {
 }
 
 try {
-    $publishResult = & dotnet publish -c Release -r win-x64 --self-contained false -o publish 2>&1
+    $publishResult = & dotnet publish -c Release -r win-x64 --self-contained true -o publish 2>&1
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Error: Publish failed" -ForegroundColor Red
         Write-Host $publishResult -ForegroundColor Red
@@ -141,6 +141,8 @@ SHA256: $sha256Hash
 
 - Windows 10 or later (x64)
 - .NET 8.0 Runtime (included in package)
+
+No additional software installation required - the application is self-contained.
 
 ## What's New
 
