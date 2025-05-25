@@ -1,5 +1,6 @@
 # Build GitHub Release Package for MassoToolEditor
-# PowerShell script to create a zip release with checksums
+# PowerShell script to publish, package, and create a zip release with checksums
+# This script automatically handles the entire release process from build to packaging
 
 param(
     [string]$OutputDir = "release"
@@ -42,10 +43,24 @@ if (Test-Path $OutputDir) {
 }
 New-Item -ItemType Directory -Path $OutputDir | Out-Null
 
-# Check if publish folder exists
-if (-not (Test-Path "publish")) {
-    Write-Host "Error: publish folder not found. Please run 'dotnet publish' first." -ForegroundColor Red
-    Write-Host "Run: dotnet publish -c Release -r win-x64 --self-contained false" -ForegroundColor Yellow
+# Clean and publish the application
+Write-Host "Publishing application..." -ForegroundColor Yellow
+if (Test-Path "publish") {
+    Remove-Item "publish" -Recurse -Force
+}
+
+try {
+    $publishResult = & dotnet publish -c Release -r win-x64 --self-contained false -o publish 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Error: Publish failed" -ForegroundColor Red
+        Write-Host $publishResult -ForegroundColor Red
+        Read-Host "Press Enter to exit"
+        exit 1
+    }
+    Write-Host "Publish completed successfully" -ForegroundColor Green
+}
+catch {
+    Write-Host "Error: Failed to publish application: $($_.Exception.Message)" -ForegroundColor Red
     Read-Host "Press Enter to exit"
     exit 1
 }
@@ -103,19 +118,18 @@ Verification:
 "@
     
     Set-Content -Path $checksumFile -Value $checksumContent -Encoding UTF8
-    
-    # Create release notes template
+      # Create release notes template
     $releaseNotesFile = Join-Path $OutputDir "release-notes-v$Version.md"
     $releaseNotesContent = @"
 # MassoToolEditor v$Version
 
-## 📦 Installation
+## Installation
 
 1. Download the zip file: ``MassoToolEditor-v$Version-win-x64.zip``
 2. Extract to a folder of your choice
 3. Run ``MassoToolEditor.exe``
 
-## ✅ File Verification
+## File Verification
 
 Verify the download integrity using the checksums in ``MassoToolEditor-v$Version-checksums.txt``:
 
@@ -123,12 +137,12 @@ Verify the download integrity using the checksums in ``MassoToolEditor-v$Version
 SHA256: $sha256Hash
 ````
 
-## 📋 Requirements
+## Requirements
 
 - Windows 10 or later (x64)
 - .NET 8.0 Runtime (included in package)
 
-## 🚀 What's New
+## What's New
 
 <!-- Add your release notes here -->
 - Feature: Unit selection dialog at startup
@@ -137,48 +151,52 @@ SHA256: $sha256Hash
 - Fix: CSV export precision and unit conversion issues
 - Fix: Display precision now matches Masso controller (5 decimal places)
 
-## 🐛 Bug Fixes
+## Bug Fixes
 
 <!-- Add bug fixes here -->
 
-## ⚠️ Breaking Changes
+## Breaking Changes
 
 <!-- Add any breaking changes here -->
 
-## 📝 Full Changelog
+## Full Changelog
 
 <!-- Link to full changelog or commit history -->
 See the [commit history](https://github.com/yourusername/MassoToolEditor/commits/main) for detailed changes.
 
 ---
 
-**⚠️ Important Disclaimer**
+**Important Disclaimer**
 
 Please back up your Masso settings before using this tool. You assume all risk if this application causes any problems with your Masso controller.
 "@
     
     Set-Content -Path $releaseNotesFile -Value $releaseNotesContent -Encoding UTF8
-    
-    # Clean up temporary folder
+      # Clean up temporary folder
     Remove-Item $releaseFolder -Recurse -Force
     
     Write-Host ""
     Write-Host "SUCCESS: Release package created!" -ForegroundColor Green
     Write-Host ""
-    Write-Host "📦 Files created:" -ForegroundColor Cyan
+    Write-Host "[PACKAGE] Files created:" -ForegroundColor Cyan
     Write-Host "  - $zipPath" -ForegroundColor White
     Write-Host "  - $checksumFile" -ForegroundColor White
     Write-Host "  - $releaseNotesFile" -ForegroundColor White
     Write-Host ""
-    Write-Host "📊 Package Info:" -ForegroundColor Cyan
+    Write-Host "[INFO] Package Info:" -ForegroundColor Cyan
     Write-Host "  Size: $([math]::Round($zipFile.Length / 1MB, 2)) MB" -ForegroundColor White
     Write-Host "  SHA256: $sha256Hash" -ForegroundColor White
     Write-Host ""
-    Write-Host "🚀 Next Steps:" -ForegroundColor Cyan
+    Write-Host "[NEXT] Next Steps:" -ForegroundColor Cyan
     Write-Host "  1. Test the extracted application" -ForegroundColor White
     Write-Host "  2. Update the release notes in: $releaseNotesFile" -ForegroundColor White
     Write-Host "  3. Create a GitHub release and upload the files" -ForegroundColor White
     Write-Host "  4. Include the checksums in the release description" -ForegroundColor White
+    Write-Host ""
+    Write-Host "[TIP] To create future releases:" -ForegroundColor Cyan
+    Write-Host "  1. Update version in Directory.Build.props" -ForegroundColor White
+    Write-Host "  2. Run this script: .\build-release.ps1" -ForegroundColor White
+    Write-Host "  3. Upload to GitHub" -ForegroundColor White
     
 }
 catch {
@@ -186,4 +204,3 @@ catch {
     exit 1
 }
 
-Read-Host "Press Enter to exit"

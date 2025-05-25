@@ -83,3 +83,44 @@ file created by the controller. If both files are not present, the controller wi
 4. Press **Load from file**. The Masso controller will load your settings, including your modified tool file, and prompt
 to reboot. Let it reboot.
 5. After reboot, go to **F4 TOOLS & OFFSET** screen and verify your updated tool configuration is present.
+
+## Development
+
+### Building from Source
+
+This project requires:
+- .NET 8.0 SDK or later
+- Windows (for WPF support)
+
+To build:
+```bash
+git clone <repository-url>
+cd MassoToolEditor
+dotnet build
+```
+
+To run:
+```bash
+dotnet run
+```
+
+### Creating Releases
+
+See [RELEASE.md](RELEASE.md) for detailed instructions on creating releases.
+
+Quick start:
+1. Update version in `Directory.Build.props`
+2. Run `.\build-release.ps1`
+3. Upload generated files to GitHub releases
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit issues and pull requests.
+
+For developers, see:
+- [RELEASE.md](RELEASE.md) - Release management process
+- [PROJECT-SUMMARY.md](PROJECT-SUMMARY.md) - Complete project overview
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
