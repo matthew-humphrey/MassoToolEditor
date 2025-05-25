@@ -6,9 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyTitle>Masso Tool Editor</AssemblyTitle>
-    <AssemblyDescription>A Windows WPF application for editing Masso 5-Axis tool files (.htg format)</AssemblyDescription>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <AssemblyFileVersion>1.0.0.0</AssemblyFileVersion>
+    <AssemblyDescription>A Windows WPF application for editing Masso 5-Axis tool files (.htg format)</AssemblyDescription>    <!-- Versions are managed in Directory.Build.props -->
     <Copyright>MIT License</Copyright>
     <EnableDefaultWindowsRuntimeReferences>true</EnableDefaultWindowsRuntimeReferences>
   </PropertyGroup>

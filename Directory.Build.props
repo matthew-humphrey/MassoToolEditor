@@ -1,0 +1,18 @@
+<Project>
+  <PropertyGroup>
+    <!-- Version Information -->
+    <MajorVersion>1</MajorVersion>
+    <MinorVersion>0</MinorVersion>
+    <PatchVersion>0</PatchVersion>
+    <RevisionVersion>0</RevisionVersion>
+    
+    <!-- Computed Version Properties -->
+    <Version>$(MajorVersion).$(MinorVersion).$(PatchVersion)</Version>
+    <AssemblyVersion>$(MajorVersion).$(MinorVersion).$(PatchVersion).$(RevisionVersion)</AssemblyVersion>
+    <AssemblyFileVersion>$(MajorVersion).$(MinorVersion).$(PatchVersion).$(RevisionVersion)</AssemblyFileVersion>
+    <ProductVersion>$(Version)</ProductVersion>
+    
+    <!-- Version Display for UI -->
+    <VersionDisplay>$(Version)</VersionDisplay>
+  </PropertyGroup>
+</Project>
