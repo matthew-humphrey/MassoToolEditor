@@ -1,8 +1,8 @@
 <Project>
   <PropertyGroup>
     <!-- Version Information -->
-    <MajorVersion>1</MajorVersion>
-    <MinorVersion>0</MinorVersion>
+    <MajorVersion>0</MajorVersion>
+    <MinorVersion>1</MinorVersion>
     <PatchVersion>0</PatchVersion>
     <RevisionVersion>0</RevisionVersion>
     
