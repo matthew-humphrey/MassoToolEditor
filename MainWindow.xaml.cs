@@ -257,20 +257,20 @@ namespace MassoToolEditor
                     record.ZOffset = 0;
                     record.ToolDiameter = 0;
                     record.ToolDiaWear = 0;
-                }
-
-                StatusText.Text = "Cleared tool records 1-104";
+                }                StatusText.Text = "Cleared tool records 1-104";
             }
         }
 
         private void BtnAbout_Click(object? sender, RoutedEventArgs? e)
         {
-            MessageBox.Show("Masso Tool Editor v1.0\n\n" +
+            MessageBox.Show($"Masso Tool Editor {Version.DisplayVersion}\n\n" +
                           "A Windows application for editing Masso 5-Axis tool files (MASSO_5-Axis_Tools.htg).\n\n" +
                           "Please back up your Masso settings before using this tool. " +
                           "You assume all risk if this application causes any problems with your Masso controller.",
                           "About Masso Tool Editor", MessageBoxButton.OK, MessageBoxImage.Information);
-        }        private void RadioUnits_Checked(object? sender, RoutedEventArgs? e)
+        }
+
+        private void RadioUnits_Checked(object? sender, RoutedEventArgs? e)
         {
             // This method is no longer used - units are selected at startup
         }private void UpdateColumnHeaders()

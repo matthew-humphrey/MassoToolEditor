@@ -2,7 +2,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Masso Tool Editor" Height="600" Width="900"
-        WindowStartupLocation="CenterScreen">    <Grid>
+        WindowStartupLocation="CenterScreen">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -72,17 +73,6 @@
                 <DataGridTextColumn Header="Tool Diameter" Binding="{Binding ToolDiameter, StringFormat=F5}" Width="120"/>
                 <DataGridTextColumn Header="Tool Dia Wear" Binding="{Binding ToolDiaWear, StringFormat=F5}" Width="120"/>
             </DataGrid.Columns>
-
-            <DataGrid.RowStyle>
-                <Style TargetType="DataGridRow">
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding IsReadOnly}" Value="True">
-                            <Setter Property="Background" Value="LightYellow"/>
-                            <Setter Property="IsEnabled" Value="False"/>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </DataGrid.RowStyle>
         </DataGrid>        <!-- Status Bar -->
         <StatusBar Grid.Row="2">
             <StatusBarItem>
